@@ -7,7 +7,10 @@
 	"publisher": "phalangers",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Phalangers/vscode-todo-bar.git"
+		"url": "https://github.com/Phalangers/vscode-todo-bar"
+	},
+	"bugs": {
+		"url": "https://github.com/Phalangers/vscode-todo-bar/issues"
 	},
 	"license": "MIT",
 	"engines": {
@@ -26,27 +29,26 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:extension.set-todo"
+		"onCommand:todo-bar.set-todo"
 	],
 	"icon": "assets/icon.png",
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "extension.set-todo",
+				"command": "todo-bar.set-todo",
 				"title": "Todo Bar: Set Todo"
 			},
 			{
-				"command": "extension.clear",
+				"command": "todo-bar.clear",
 				"title": "Todo Bar: Clear"
 			}
 		],
 		"keybindings": [
 			{
-				"command": "extension.set-todo",
-				"key": "ctrl+atl+x",
-				"mac": "cmd+alt+x",
-				"when": "editorTextFocus && editorLangId == todo"
+				"command": "todo-bar.set-todo",
+				"key": "ctrl+alt+x",
+				"mac": "cmd+alt+x"
 			}
 		]
 	},

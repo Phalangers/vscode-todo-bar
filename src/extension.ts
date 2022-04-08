@@ -6,14 +6,14 @@ export function activate(context: vscode.ExtensionContext) {
 
 	statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0,)
 	statusBarItem.name = 'todo-bar'
-	statusBarItem.command = 'extension.clear'
+	statusBarItem.command = 'todo-bar.clear'
 	statusBarItem.hide()
 
 	// updateTheme()
 	// vscode.window.onDidChangeActiveColorTheme(updateTheme)
 
-	let disposable1 = vscode.commands.registerCommand('extension.set-todo', setTodo)
-	let disposable2 = vscode.commands.registerCommand('extension.clear', clearTodo)
+	let disposable1 = vscode.commands.registerCommand('todo-bar.set-todo', setTodo)
+	let disposable2 = vscode.commands.registerCommand('todo-bar.clear', clearTodo)
 
 	context.subscriptions.push(disposable1, disposable2, statusBarItem)
 }
@@ -22,9 +22,14 @@ function setTodo() {
 	const activeEditor = vscode.window.activeTextEditor
 	if (activeEditor) {
 		const line = activeEditor.document.lineAt(activeEditor.selection.active.line)
-		statusBarItem.text = line.text.trim()
-		statusBarItem.tooltip = line.text.trim()
-		statusBarItem.show()
+		const text = line.text.trim()
+		if (text == statusBarItem.text) {
+			clearTodo()
+		} else {
+			statusBarItem.text = text
+			statusBarItem.tooltip = text
+			statusBarItem.show()
+		}
 	}
 }
 
