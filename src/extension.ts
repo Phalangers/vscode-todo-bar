@@ -9,8 +9,8 @@ export function activate(context: vscode.ExtensionContext) {
 	statusBarItem.command = 'todo-bar.clear'
 	statusBarItem.hide()
 
-	// updateTheme()
-	// vscode.window.onDidChangeActiveColorTheme(updateTheme)
+	updateTheme()
+	vscode.window.onDidChangeActiveColorTheme(updateTheme)
 
 	let disposable1 = vscode.commands.registerCommand('todo-bar.set-todo', setTodo)
 	let disposable2 = vscode.commands.registerCommand('todo-bar.clear', clearTodo)
@@ -38,21 +38,22 @@ function clearTodo() {
 	statusBarItem.hide()
 }
 
-// function updateTheme() {
-// 	const theme = vscode.window.activeColorTheme
+function updateTheme() {
+	const theme = vscode.window.activeColorTheme
+	statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground')
 
-// 	switch (theme.kind) {
-// 		case vscode.ColorThemeKind.Light:
-// 		case vscode.ColorThemeKind.HighContrastLight:
-// 			statusBarItem.color = new vscode.ThemeColor('errorForeground')
-// 			break
-// 		case vscode.ColorThemeKind.Dark:
-// 		case vscode.ColorThemeKind.HighContrast:
-// 			statusBarItem.color = '#ffffff'
-// 			break
-// 	}
+	// switch (theme.kind) {
+	// 	case vscode.ColorThemeKind.Light:
+	// 	case vscode.ColorThemeKind.HighContrastLight:
+	// 		statusBarItem.color = new vscode.ThemeColor('errorForeground')
+	// 		break
+	// 	case vscode.ColorThemeKind.Dark:
+	// 	case vscode.ColorThemeKind.HighContrast:
+	// 		statusBarItem.color = '#ffffff'
+	// 		break
+	// }
 
-// }
+}
 
 
 export function deactivate() { }
