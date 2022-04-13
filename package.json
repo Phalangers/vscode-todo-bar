@@ -50,7 +50,17 @@
 				"key": "ctrl+alt+x",
 				"mac": "cmd+alt+x"
 			}
-		]
+		],
+		"configuration": {
+			"properties": {
+				"todo-bar.showParentTasks": {
+					"type": "boolean",
+					"description": "Show the parent tasks in the status bar.",
+					"default": true,
+					"scope": "window"
+				}
+			}
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
