@@ -12,8 +12,7 @@ let state: {
 
 export function activate(context: vscode.ExtensionContext) {
 
-	// Fetch settings
-	settings = vscode.workspace.getConfiguration('todo-bar') as unknown as typeof settings
+	fetchSettings()
 
 	// Create statusBarItem
 	state.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0,)
@@ -28,10 +27,14 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Listen to changes
 	let disposable3 = vscode.workspace.onDidChangeConfiguration(() => {
-		displayTodo(state.statusBarItem.text)
+		fetchSettings()
 	})
 
 	context.subscriptions.push(disposable1, disposable2, disposable3, state.statusBarItem)
+}
+
+function fetchSettings() {
+	settings = vscode.workspace.getConfiguration('todo-bar') as unknown as typeof settings
 }
 
 function setTodo_Command() {
@@ -63,6 +66,7 @@ function fetchTodoText(activeEditor: vscode.TextEditor): string {
 		.map(line => line.text.trim())
 		.map(line => removeLeadingChars(line, [' ', '-']))
 		.reverse()
+		.filter(line => line.length > 0)
 		.join(' -> ')
 }
 
@@ -93,7 +97,7 @@ function fetchParentLines(document: vscode.TextDocument, mainLineNumber: number)
 function indentationLevel(line: vscode.TextLine) {
 	let res = 0
 	for (let i = 0; i < line.text.length; i++) {
-		if (line.text[i] == '\t') {
+		if (line.text[i] == '\t' || line.text[i] == ' ') {
 			res++
 		} else {
 			break
