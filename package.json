@@ -29,7 +29,10 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:todo-bar.set-todo"
+		"onCommand:todo-bar.set-todo",
+		"onCommand:todo-bar.clear-todo",
+		"onCommand:todo-bar.smart",
+		"onCommand:todo-bar.jump-to-file"
 	],
 	"icon": "assets/icon.png",
 	"main": "./out/extension.js",
@@ -41,14 +44,22 @@
 			},
 			{
 				"command": "todo-bar.clear",
-				"title": "Todo Bar: Clear"
+				"title": "Todo Bar: Clear Todo"
+			},
+			{
+				"command": "todo-bar.smart",
+				"title": "Todo Bar: Smart"
+			},
+			{
+				"command": "todo-bar.jump-to-file",
+				"title": "Todo Bar: Jump To File"
 			}
 		],
 		"keybindings": [
 			{
-				"command": "todo-bar.set-todo",
-				"key": "ctrl+alt+x",
-				"mac": "cmd+alt+x"
+				"command": "todo-bar.smart",
+				"key": "ctrl+q",
+				"mac": "cmd+q"
 			}
 		],
 		"configuration": {
@@ -60,7 +71,29 @@
 					"scope": "window"
 				}
 			}
-		}
+		},
+		"colors": [
+			{
+				"id": "todobar.highlightColor",
+				"description": "Background color for the current todo line.",
+				"defaults": {
+					"dark": "editor.findMatchBackground",
+					"light": "editor.findMatchBackground",
+					"highContrast": "editor.findMatchBackground",
+					"highContrastLght": "editor.findMatchBackground"
+				}
+			},
+			{
+				"id": "todobar.secondaryHighlightColor",
+				"description": "Background color for the parent todo lines.",
+				"defaults": {
+					"dark": "editor.findMatchBackground",
+					"light": "editor.findMatchBackground",
+					"highContrast": "editor.findMatchBackground",
+					"highContrastLght": "editor.findMatchBackground"
+				}
+			}
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
@@ -84,6 +117,7 @@
 		"typescript": "^4.5.5"
 	},
 	"dependencies": {
+		"rxjs": "^7.5.5",
 		"vsce": "^2.7.0"
 	}
 }

@@ -1,20 +1,35 @@
+import { Subject } from 'rxjs'
 import * as vscode from 'vscode'
+import { highlight } from './highlight'
+import { indentationLevel, removeLeadingChars } from './misc'
 
-let settings: {
-	showParentTasks: boolean,
-}
+const state = {
+	configuration: {
+		showParentTasks: false,
+	},
+	context: null as vscode.ExtensionContext,
+	activeEditor: vscode.window.activeTextEditor,
 
-let state: {
-	statusBarItem: vscode.StatusBarItem,
-} = {
-	statusBarItem: null,
+	show: true,
+	lines: [] as vscode.TextLine[],
+	uri: null as vscode.Uri,
+
+	statusBarItem: null as vscode.StatusBarItem,
+	decorationType: null as vscode.TextEditorDecorationType,
+	secondaryDecorationType: null as vscode.TextEditorDecorationType,
+	documentChanged: new Subject() as Subject<vscode.TextDocumentChangeEvent>,
 }
+export type State = typeof state
 
 export function activate(context: vscode.ExtensionContext) {
 
-	fetchSettings()
+	fetchConfiguration(state)
+	state.context = context
+	vscode.window.onDidChangeActiveTextEditor(editor => {
+		state.activeEditor = editor
+	}, null, context.subscriptions)
 
-	// Create statusBarItem
+	// Create status-bar
 	state.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0,)
 	state.statusBarItem.name = 'todo-bar'
 	state.statusBarItem.command = 'todo-bar.clear'
@@ -22,91 +37,113 @@ export function activate(context: vscode.ExtensionContext) {
 	state.statusBarItem.hide()
 
 	// Register commands
-	let disposable1 = vscode.commands.registerCommand('todo-bar.set-todo', setTodo_Command)
-	let disposable2 = vscode.commands.registerCommand('todo-bar.clear', clearTodo_Command)
+	const disposable1 = vscode.commands.registerCommand('todo-bar.set-todo', commands.setTodo)
+	const disposable2 = vscode.commands.registerCommand('todo-bar.clear', commands.clearTodo)
+	const disposable3 = vscode.commands.registerCommand('todo-bar.smart', commands.smart)
+	const disposable4 = vscode.commands.registerCommand('todo-bar.jump-to-file', commands.jumpToFile)
 
 	// Listen to changes
-	let disposable3 = vscode.workspace.onDidChangeConfiguration(() => {
-		fetchSettings()
-	})
+	vscode.workspace.onDidChangeConfiguration(() => {
+		fetchConfiguration(state)
+		displayInStatusBar(formatText(state.lines))
+	}, null, context.subscriptions)
 
-	context.subscriptions.push(disposable1, disposable2, disposable3, state.statusBarItem)
+	highlight.setup(state)
+
+	context.subscriptions.push(state.statusBarItem, state.decorationType, disposable1, disposable2, disposable3, disposable4,)
 }
 
-function fetchSettings() {
-	settings = vscode.workspace.getConfiguration('todo-bar') as unknown as typeof settings
+function fetchConfiguration(state: State) {
+	state.configuration = vscode.workspace.getConfiguration('todo-bar') as unknown as typeof state.configuration
 }
 
-function setTodo_Command() {
-	const activeEditor = vscode.window.activeTextEditor
-	if (activeEditor) {
-		const text = fetchTodoText(activeEditor)
-		if (text == state.statusBarItem.text) {
-			clearTodo_Command()
-		} else {
-			displayTodo(text)
+namespace commands {
+
+	export function smart() {
+		if (!state.activeEditor.document) return
+
+		// Jump to file
+		if (state.uri && state.uri.toString() != state.activeEditor.document.uri.toString()) {
+			jumpToFile()
+			return
 		}
+
+		fetchLines(state)
+
+		if (formatText(state.lines) == state.statusBarItem.text) {
+			clearTodo()
+			return
+		}
+
+		setTodo()
 	}
+
+	export function setTodo() {
+		if (!state.activeEditor.document) return
+
+		fetchLines(state)
+		state.uri = state.activeEditor.document.uri
+		state.show = true
+		const text = formatText(state.lines)
+		displayInStatusBar(text)
+		highlight.updateHighlight(state)
+	}
+
+	export function clearTodo() {
+		state.show = false
+		state.uri = null
+		state.statusBarItem.text = ''
+		state.statusBarItem.hide()
+		highlight.clear(state)
+	}
+
+	export function jumpToFile() {
+		if (!state.uri) {
+			throw new Error('No file to jump to')
+		}
+
+		vscode.workspace.openTextDocument(state.uri).then(doc => {
+			vscode.window.showTextDocument(doc)
+		})
+	}
+
 }
 
-function clearTodo_Command() {
-	state.statusBarItem.text = ''
-	state.statusBarItem.hide()
-}
+function formatText(lines: vscode.TextLine[]): string {
 
-// Reads the selected line from the document, and optionally the parent tasks
-function fetchTodoText(activeEditor: vscode.TextEditor): string {
-	let lines: vscode.TextLine[] = []
-	if (settings.showParentTasks) {
-		lines = fetchParentLines(activeEditor.document, activeEditor.selection.active.line)
+	if (state.configuration.showParentTasks) {
+		return lines.map(line => line.text.trim())
+			.map(line => removeLeadingChars(line))
+			.reverse()
+			.filter(line => line.length > 0)
+			.join(' ⇒ ')
 	} else {
-		lines = [activeEditor.document.lineAt(activeEditor.selection.active.line)]
+		return removeLeadingChars(lines[lines.length - 1].text.trim())
 	}
-	return lines
-		.map(line => line.text.trim())
-		.map(line => removeLeadingChars(line, [' ', '-']))
-		.reverse()
-		.filter(line => line.length > 0)
-		.join(' -> ')
 }
 
-function removeLeadingChars(text: string, symbols: string[]): string {
-	let i = 0
-	for (; i < symbols.length; i++) {
-		if (!symbols.includes(text[i])) {
-			break
-		}
-	}
-	return text.slice(i)
-}
-
-function fetchParentLines(document: vscode.TextDocument, mainLineNumber: number): vscode.TextLine[] {
+// Reads the current line from the document, then read upwards to find its parent lines (less indented)
+function fetchLines(state: State) {
 	let lines = []
 	let currentIndentationLevel = 999
-	for (let i = mainLineNumber; i >= 0; i--) {
-		const line = document.lineAt(i)
-		const lineIndentationLevel = indentationLevel(line)
-		if (lineIndentationLevel < currentIndentationLevel) {
-			currentIndentationLevel = lineIndentationLevel
+	for (let i = state.activeEditor.selection.active.line; i >= 0; i--) {
+		const line = state.activeEditor.document.lineAt(i)
+		if (line.text.trim().length == 0) {
+			if (lines.length == 0) {
+				throw new Error('Invalid line')
+			} else {
+				continue
+			}
+		}
+		if (indentationLevel(line) < currentIndentationLevel) {
+			currentIndentationLevel = indentationLevel(line)
 			lines.push(line)
 		}
 	}
-	return lines
+	state.lines = lines
 }
 
-function indentationLevel(line: vscode.TextLine) {
-	let res = 0
-	for (let i = 0; i < line.text.length; i++) {
-		if (line.text[i] == '\t' || line.text[i] == ' ') {
-			res++
-		} else {
-			break
-		}
-	}
-	return res
-}
-
-function displayTodo(text: string) {
+function displayInStatusBar(text: string) {
 	state.statusBarItem.text = text
 	state.statusBarItem.tooltip = text
 	state.statusBarItem.show()
