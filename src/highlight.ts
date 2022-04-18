@@ -1,5 +1,4 @@
 import { stat } from 'fs'
-import { throttleTime } from 'rxjs/operators'
 import * as vscode from 'vscode'
 import { State } from './extension'
 import { indentationLevel } from './misc'
@@ -25,18 +24,24 @@ export namespace highlight {
 
 		vscode.workspace.onDidChangeTextDocument(event => {
 			if (state.activeEditor && event.document === state.activeEditor.document) {
-				state.documentChanged.next(event)
+				state.timeout = setTimeout(() => {
+					updateHighlight(state)
+				})
 			}
 		}, null, state.context.subscriptions)
 
-		state.documentChanged.pipe(throttleTime(250)).subscribe(event => {
-			updateHighlight(state)
-		})
+	}
 
+	export function throttleUpdateHighlight(state: State) {
+		if (state.timeout) {
+			clearTimeout(state.timeout)
+			state.timeout = undefined
+		}
+		state.timeout = setTimeout(updateHighlight, 250)
 	}
 
 	export function updateHighlight(state: State) {
-		if (state.show && state.lines.length > 0) {
+		if (state.show && state.lines.length > 0 && state.uri.toString() == state.activeEditor.document.uri.toString()) {
 			state.activeEditor.setDecorations(state.decorationType, [range_ingoreWhitespace(state.lines[0])])
 			if (state.configuration.showParentTasks) {
 				state.activeEditor.setDecorations(state.secondaryDecorationType, state.lines.slice(1).map(line => range_ingoreWhitespace(line)))

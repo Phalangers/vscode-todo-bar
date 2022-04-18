@@ -1,4 +1,3 @@
-import { Subject } from 'rxjs'
 import * as vscode from 'vscode'
 import { highlight } from './highlight'
 import { indentationLevel, removeLeadingChars } from './misc'
@@ -17,7 +16,7 @@ const state = {
 	statusBarItem: null as vscode.StatusBarItem,
 	decorationType: null as vscode.TextEditorDecorationType,
 	secondaryDecorationType: null as vscode.TextEditorDecorationType,
-	documentChanged: new Subject() as Subject<vscode.TextDocumentChangeEvent>,
+	timeout: null as NodeJS.Timer,
 }
 export type State = typeof state
 
@@ -60,10 +59,10 @@ function fetchConfiguration(state: State) {
 namespace commands {
 
 	export function smart() {
-		if (!state.activeEditor.document) return
+		if (!state.activeEditor?.document) return
 
 		// Jump to file
-		if (state.uri && state.uri.toString() != state.activeEditor.document.uri.toString()) {
+		if (state.uri && state.uri.toString() != state.activeEditor?.document.uri.toString()) {
 			jumpToFile()
 			return
 		}
@@ -79,10 +78,10 @@ namespace commands {
 	}
 
 	export function setTodo() {
-		if (!state.activeEditor.document) return
+		if (!state.activeEditor?.document) return
 
 		fetchLines(state)
-		state.uri = state.activeEditor.document.uri
+		state.uri = state.activeEditor?.document.uri
 		state.show = true
 		const text = formatText(state.lines)
 		displayInStatusBar(text)
@@ -103,8 +102,14 @@ namespace commands {
 		}
 
 		vscode.workspace.openTextDocument(state.uri).then(doc => {
-			vscode.window.showTextDocument(doc)
+			vscode.window.showTextDocument(doc).then(() => {
+				if (doc.getText().length == 0) {
+					vscode.commands.executeCommand('workbench.action.closeActiveEditor')
+					throw new Error('Untitled file containing the todo has been lost')
+				}
+			})
 		})
+
 	}
 
 }
@@ -127,7 +132,7 @@ function fetchLines(state: State) {
 	let lines = []
 	let currentIndentationLevel = 999
 	for (let i = state.activeEditor.selection.active.line; i >= 0; i--) {
-		const line = state.activeEditor.document.lineAt(i)
+		const line = state.activeEditor?.document.lineAt(i)
 		if (line.text.trim().length == 0) {
 			if (lines.length == 0) {
 				throw new Error('Invalid line')
