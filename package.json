@@ -60,6 +60,11 @@
 				"command": "todo-bar.smart",
 				"key": "ctrl+q",
 				"mac": "cmd+q"
+			},
+			{
+				"command": "todo-bar.clear-todo",
+				"key": "ctrl+alt+q",
+				"mac": "cmd+alt+q"
 			}
 		],
 		"configuration": {

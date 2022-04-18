@@ -37,7 +37,7 @@ export namespace highlight {
 			clearTimeout(state.timeout)
 			state.timeout = undefined
 		}
-		state.timeout = setTimeout(updateHighlight, 250)
+		state.timeout = setTimeout(updateHighlight, 100)
 	}
 
 	export function updateHighlight(state: State) {

@@ -24,9 +24,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	fetchConfiguration(state)
 	state.context = context
-	vscode.window.onDidChangeActiveTextEditor(editor => {
-		state.activeEditor = editor
-	}, null, context.subscriptions)
+
 
 	// Create status-bar
 	state.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0,)
@@ -41,12 +39,16 @@ export function activate(context: vscode.ExtensionContext) {
 	const disposable3 = vscode.commands.registerCommand('todo-bar.smart', commands.smart)
 	const disposable4 = vscode.commands.registerCommand('todo-bar.jump-to-file', commands.jumpToFile)
 
-	// Listen to changes
+	// Configuration changes
 	vscode.workspace.onDidChangeConfiguration(() => {
 		fetchConfiguration(state)
 		displayInStatusBar(formatText(state.lines))
 	}, null, context.subscriptions)
 
+	// Editor changes
+	vscode.window.onDidChangeActiveTextEditor(editor => {
+		state.activeEditor = editor
+	}, null, context.subscriptions)
 	highlight.setup(state)
 
 	context.subscriptions.push(state.statusBarItem, state.decorationType, disposable1, disposable2, disposable3, disposable4,)
@@ -61,7 +63,7 @@ namespace commands {
 	export function smart() {
 		if (!state.activeEditor?.document) return
 
-		// Jump to file
+		// EITHER jump to file
 		if (state.uri && state.uri.toString() != state.activeEditor?.document.uri.toString()) {
 			jumpToFile()
 			return
@@ -69,11 +71,13 @@ namespace commands {
 
 		fetchLines(state)
 
+		// OR go back to previous file
 		if (formatText(state.lines) == state.statusBarItem.text) {
-			clearTodo()
+			vscode.commands.executeCommand('workbench.action.navigateBackInEditLocations')
 			return
 		}
 
+		// OR set todo
 		setTodo()
 	}
 
