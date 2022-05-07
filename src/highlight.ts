@@ -1,4 +1,3 @@
-import { stat } from 'fs'
 import * as vscode from 'vscode'
 import { State } from './extension'
 import { indentationLevel } from './misc'
@@ -25,7 +24,7 @@ export namespace highlight {
 		vscode.workspace.onDidChangeTextDocument(event => {
 			if (state.activeEditor && event.document === state.activeEditor.document) {
 				state.timeout = setTimeout(() => {
-					updateHighlight(state)
+					throttleUpdateHighlight(state)
 				})
 			}
 		}, null, state.context.subscriptions)
@@ -35,9 +34,9 @@ export namespace highlight {
 	export function throttleUpdateHighlight(state: State) {
 		if (state.timeout) {
 			clearTimeout(state.timeout)
-			state.timeout = undefined
+			state.timeout = null
 		}
-		state.timeout = setTimeout(updateHighlight, 100)
+		state.timeout = setTimeout(() => { updateHighlight(state) }, 100)
 	}
 
 	export function updateHighlight(state: State) {
@@ -55,8 +54,8 @@ export namespace highlight {
 	}
 
 	export function clear(state: State) {
-		state.activeEditor.setDecorations(state.decorationType, [])
-		state.activeEditor.setDecorations(state.secondaryDecorationType, [])
+		state.activeEditor?.setDecorations(state.decorationType, [])
+		state.activeEditor?.setDecorations(state.secondaryDecorationType, [])
 	}
 
 }

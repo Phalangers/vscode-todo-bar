@@ -29,9 +29,10 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:todo-bar.set-todo",
-		"onCommand:todo-bar.clear-todo",
-		"onCommand:todo-bar.smart",
+		"onCommand:todo-bar.set",
+		"onCommand:todo-bar.clear",
+		"onCommand:todo-bar.set-or-clear",
+		"onCommand:todo-bar.jump-back-and-forth",
 		"onCommand:todo-bar.jump-to-file"
 	],
 	"icon": "assets/icon.png",
@@ -39,7 +40,7 @@
 	"contributes": {
 		"commands": [
 			{
-				"command": "todo-bar.set-todo",
+				"command": "todo-bar.set",
 				"title": "Todo Bar: Set Todo"
 			},
 			{
@@ -47,22 +48,26 @@
 				"title": "Todo Bar: Clear Todo"
 			},
 			{
-				"command": "todo-bar.smart",
-				"title": "Todo Bar: Smart"
+				"command": "todo-bar.set-or-clear",
+				"title": "Todo Bar: Set Or Clear"
 			},
 			{
 				"command": "todo-bar.jump-to-file",
 				"title": "Todo Bar: Jump To File"
+			},
+			{
+				"command": "todo-bar.jump-back-and-forth",
+				"title": "Todo Bar: Jump Back And Forth"
 			}
 		],
 		"keybindings": [
 			{
-				"command": "todo-bar.smart",
+				"command": "todo-bar.jump-back-and-forth",
 				"key": "ctrl+q",
 				"mac": "cmd+q"
 			},
 			{
-				"command": "todo-bar.clear-todo",
+				"command": "todo-bar.set-or-clear",
 				"key": "ctrl+alt+q",
 				"mac": "cmd+alt+q"
 			}
