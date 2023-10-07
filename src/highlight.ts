@@ -1,76 +1,85 @@
+import { effect } from 'ng-signals'
 import * as vscode from 'vscode'
-import { State } from './extension'
-import { indentationLevel } from './misc'
+import { Disposable } from 'vscode'
+import { TodoBarExtension } from './extension'
+import { firstIndexNot, uriToFilePath } from './misc'
 
-export namespace highlight {
-  export function setup(state: State) {
-    state.decorationType = vscode.window.createTextEditorDecorationType({
+/**
+ * Handles highlighting the selected lines
+ */
+export class Highlights {
+
+  decorationType: vscode.TextEditorDecorationType
+  secondaryDecorationType: vscode.TextEditorDecorationType
+  timeout: NodeJS.Timeout | null = null
+  subscriptions: Disposable[] = []
+
+  constructor(public ext: TodoBarExtension) {
+    this.decorationType = vscode.window.createTextEditorDecorationType({
       backgroundColor: { id: 'todobar.highlightColor' },
       fontStyle: 'italic',
     })
 
-    state.secondaryDecorationType = vscode.window.createTextEditorDecorationType({
+    this.secondaryDecorationType = vscode.window.createTextEditorDecorationType({
       backgroundColor: { id: 'todobar.secondaryHighlightColor' },
     })
 
-    vscode.window.onDidChangeActiveTextEditor(
-      () => {
-        if (state.activeEditor.document) {
-          updateHighlight(state)
-        }
-      },
-      null,
-      state.extensionContext.subscriptions
-    )
+    vscode.workspace.onDidChangeTextDocument(event => {
+      const activeEditor = this.ext.activeEditor.$
+      if (activeEditor && event.document === activeEditor.document) {
+        this.updateThrottled()
+      }
+    }, null, this.subscriptions)
 
-    vscode.workspace.onDidChangeTextDocument(
-      event => {
-        if (state.activeEditor && event.document === state.activeEditor.document) {
-          state.timeout = setTimeout(() => {
-            throttleUpdateHighlight(state)
-          })
-        }
-      },
-      null,
-      state.extensionContext.subscriptions
-    )
+    effect(() => this.updateThrottled())
   }
 
-  export function throttleUpdateHighlight(state: State) {
-    if (state.timeout) {
-      clearTimeout(state.timeout)
-      state.timeout = null
+  updateThrottled() {
+    if (this.timeout) {
+      clearTimeout(this.timeout)
+      this.timeout = null
     }
-    state.timeout = setTimeout(() => {
-      updateHighlight(state)
-    }, 100)
+    this.timeout = setTimeout(() => {
+      this.update()
+    }, 20)
   }
 
-  export function updateHighlight(state: State) {
+  private update() {
+    if (!this.ext.currentTodo.$) return
+    if (!this.ext.activeEditor.$) return
+
     if (
-      state.show &&
-      state.lines.length > 0 &&
-      state.uri.toString() == state.activeEditor.document.uri.toString()
+      this.ext.show &&
+      this.ext.lines.length > 0 &&
+      this.ext.currentTodo.$.file == uriToFilePath(this.ext.activeEditor.$.document.uri)
     ) {
-      state.activeEditor.setDecorations(state.decorationType, [
-        range_ingoreWhitespace(state.lines[0]),
+      this.ext.activeEditor.$.setDecorations(this.decorationType, [
+        lineToHighlightRange(this.ext.lines[0], this.ext.configuration.$.ignoredCharacters),
       ])
-      if (state.configuration.showParentTasks) {
-        state.activeEditor.setDecorations(
-          state.secondaryDecorationType,
-          state.lines.slice(1).map(line => range_ingoreWhitespace(line))
+      if (this.ext.configuration.$.showParentTasks) {
+        this.ext.activeEditor.$.setDecorations(
+          this.secondaryDecorationType,
+          this.ext.lines.slice(1).map(line => lineToHighlightRange(line, this.ext.configuration.$.ignoredCharacters))
         )
       }
     }
   }
 
-  function range_ingoreWhitespace(line: vscode.TextLine) {
-    const indentation = indentationLevel(line)
-    return new vscode.Range(line.range.start.translate(0, indentation), line.range.end)
+  clear() {
+    this.ext.activeEditor.$?.setDecorations(this.decorationType, [])
+    this.ext.activeEditor.$?.setDecorations(this.secondaryDecorationType, [])
   }
 
-  export function clear(state: State) {
-    state.activeEditor?.setDecorations(state.decorationType, [])
-    state.activeEditor?.setDecorations(state.secondaryDecorationType, [])
+  dispose() {
+    this.subscriptions.forEach(sub => sub.dispose())
   }
+
+}
+
+/**
+ * Returns a range from after the ignoredCharacters til the end of the line.
+ */
+function lineToHighlightRange(line: vscode.TextLine, ignoredCharacters: string) {
+  const startIndex = firstIndexNot(line.text, ignoredCharacters)
+  return new vscode.Range(line.range.start.translate(0, startIndex), line.range.end)
 }

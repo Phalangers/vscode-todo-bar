@@ -28,6 +28,10 @@
 	"categories": [
 		"Other"
 	],
+	"files": [
+		"**/*",
+		"!private/notes.txt"
+	],
 	"activationEvents": [
 		"onCommand:todo-bar.set",
 		"onCommand:todo-bar.clear",
@@ -79,6 +83,30 @@
 					"description": "Show the parent tasks in the status bar.",
 					"default": true,
 					"scope": "window"
+				},
+				"todo-bar.lightPrefix": {
+					"type": "string",
+					"description": "The prefix to show on the selected line's parents.",
+					"default": ">",
+					"scope": "window"
+				},
+				"todo-bar.prefix": {
+					"type": "string",
+					"description": "The prefix to show on the selected line.",
+					"default": ">",
+					"scope": "window"
+				},
+				"todo-bar.ignoredCharacters": {
+					"type": "string",
+					"description": "The characters to ignore at the beginning of lines.",
+					"default": " \t-",
+					"scope": "window"
+				},
+				"todo-bar.todoFilePath": {
+					"type": "string",
+					"description": "The todo file URI.",
+					"default": null,
+					"scope": "window"
 				}
 			}
 		},
@@ -127,6 +155,7 @@
 		"typescript": "^4.5.5"
 	},
 	"dependencies": {
+		"ng-signals": "^0.0.1",
 		"rxjs": "^7.5.5",
 		"vsce": "^2.7.0"
 	}

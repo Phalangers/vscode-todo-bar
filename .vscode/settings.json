@@ -28,5 +28,6 @@
         "titleBar.inactiveForeground": "#15202b99",
         "commandCenter.border": "#15202b99"
     },
-    "peacock.remoteColor": "#f9e64f"
+    "peacock.remoteColor": "#f9e64f",
+    "window.title": "first jump to file, no highlight"
 }

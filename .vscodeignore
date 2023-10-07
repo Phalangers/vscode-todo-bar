@@ -14,3 +14,4 @@ out/test/**
 src/**
 tsconfig.json
 tslint.json
+private
