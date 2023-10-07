@@ -29,5 +29,5 @@
         "commandCenter.border": "#15202b99"
     },
     "peacock.remoteColor": "#f9e64f",
-    "window.title": "first jump to file, no highlight"
+    "window.title": "when a line is highlighted, moving the line highlights the wrong line ⇒ on text change - highlight.update"
 }

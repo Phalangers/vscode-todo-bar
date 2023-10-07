@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
-import { TodoBarExtension } from "../extension"
-import { assert, error, findCurrentTodoLine, jumpToLine } from '../misc'
+import { TodoBarExtension, getParentLines } from "../extension"
+import { assert, error, findMarkedLine, jumpToLine } from '../misc'
 
 
 export async function command_jumpToFile(ext: TodoBarExtension) {
@@ -28,15 +28,15 @@ export async function command_jumpToFile(ext: TodoBarExtension) {
 
 	const activeEditor = ext.activeEditor.$
 	if (activeEditor) {
-		if (ext.currentTodo.$.line == -1) {
+		if (ext.currentTodo.$.line) {
 			ext.currentTodo.mutate(todo => {
-				todo!.line = findCurrentTodoLine(activeEditor.document, ext.configuration.$)
+				todo!.line = findMarkedLine(activeEditor.document, ext.configuration.$)
 			})
-			ext.lines = ext.getParentLines(activeEditor)
+			ext.lines.$ = getParentLines(activeEditor, ext.currentTodo.$.line)
 		}
 
-		if (ext.lines?.length > 0) {
-			jumpToLine(activeEditor, ext.lines[0])
+		if (ext.lines.$?.length > 0) {
+			jumpToLine(activeEditor, ext.lines.$[0])
 		}
 		ext.highlights.updateThrottled()
 	}

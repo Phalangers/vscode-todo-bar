@@ -1,4 +1,4 @@
-import { signal } from 'ng-signals'
+import { signal as ngSignal } from 'ng-signals'
 import * as vscode from 'vscode'
 import { Configuration, TodoBarExtension } from './extension'
 
@@ -9,56 +9,55 @@ export function assert(condition?: any, message?: string) {
 }
 
 export function error(message: string) {
-	return vscode.window.showErrorMessage(message)
+	return vscode.window.showErrorMessage("Extension: TodoBar: " + message)
 }
 
 /**
- * Finds the first index in a string that does not match any of the symbols.
- * @returns - The index of the first character that does not match the symbols, or -1 if all match.
+ * Walks forward as long as the `chars` match the string.
  */
-export function firstIndexNot(str: string, symbols: string, startIndex = 0) {
+export function walkForward(str: string, chars: string, startIndex = 0) {
 	let i = startIndex
 	for (; i < str.length; i++) {
-		if (!symbols.includes(str[i])) {
-			return i
+		if (!chars.includes(str[i])) {
+			break
 		}
 	}
-	return -1
+	return i
 }
 
 /**
  * Given a vscode.TextLine, counts the number of leading tabs/spaces in line.text.
  */
-export function indentationLevel(line: vscode.TextLine, ignoredCharacters: string) {
+export function measureIndentation(line: string, ignoredCharacters: string) {
 	let indentation = 0
-	for (const c of line.text) {
+	for (const c of line) {
 		if (!ignoredCharacters.includes(c)) {
-			return indentation
-		} else {
-			if (c == '\t') indentation += 4
-			else indentation++
+			break
 		}
+		if (c == '\t') indentation += 4
+		else indentation++
 	}
-	return -1
+	return indentation
 }
 
 /**
  * Removes leading characters from a given text.
- *
- * @param text - The input text.
- * @param symbols - The symbols to remove from the beginning of the text.
- * @returns The text with leading characters removed.
  */
 export function removeLeadingChars(text: string, symbols: string): string {
-	return text.slice(firstIndexNot(text, symbols))
+	const firstIndex = walkForward(text, symbols)
+	if (firstIndex) {
+		return text.slice(firstIndex)
+	} else {
+		return text
+	}
 }
 
-export function getPrefixRange(ext: TodoBarExtension, line: vscode.TextLine) {
+export function getMarkRange(ext: TodoBarExtension, line: vscode.TextLine) {
 	const configuration = ext.configuration.$
 	if (!line.text.includes(configuration.lightPrefix) && !line.text.includes(configuration.prefix)) return null
 
-	const beginPrefix = firstIndexNot(line.text, configuration.ignoredCharacters)
-	const endPrefix = firstIndexNot(line.text, configuration.lightPrefix + configuration.prefix, beginPrefix)
+	const beginPrefix = walkForward(line.text, configuration.ignoredCharacters)
+	const endPrefix = walkForward(line.text, configuration.lightPrefix + configuration.prefix, beginPrefix)
 
 	return new vscode.Range(line.lineNumber, beginPrefix, line.lineNumber, endPrefix)
 }
@@ -67,21 +66,22 @@ export function uriToFilePath(uri: vscode.Uri) {
 	return uri?.toString().slice(7)
 }
 
-export function variable<T>(value: T) {
-	const sig = signal<T>(value)
-	return {
-		get $(): Readonly<T> {
-			return sig()
+export function signal<T>(value: T) {
+	const sig = ngSignal<T>(value)
+	Object.defineProperties(sig, {
+		$: {
+			get: () => {
+				return sig()
+			},
+			set: (value) => {
+				sig.set(value)
+			},
 		},
-		set $(value: T) {
-			sig.set(value)
-		},
-		mutate(mutateFn: (value: T) => void) {
-			sig.mutate(mutateFn)
-		},
-		update(updateFn: (value: T) => T) {
-			sig.update(updateFn)
-		}
+	})
+
+	return sig as unknown as typeof sig & {
+		get $(): Readonly<T>
+		set $(value: T)
 	}
 }
 
@@ -92,19 +92,21 @@ export function jumpToLine(activeEditor: vscode.TextEditor, line: vscode.TextLin
 	activeEditor.revealRange(line.range)
 }
 
-export function findCurrentTodoLine(document: vscode.TextDocument, configuration: Configuration): number {
-	let mostIndentedMark = null
-	let mostIndentedLine = null
+export function findMarkedLine(document: vscode.TextDocument, configuration: Configuration): number | null {
+	let maxIndentationLine = null
+	let maxIndentation = 0
 	for (let i = 0; i < document.lineCount; i++) {
 		const line = document.lineAt(i)
 		if (!line.text.includes(configuration.prefix)) continue
-		const indentationWithPrefix = firstIndexNot(line.text, configuration.ignoredCharacters + configuration.prefix)
-		if (indentationWithPrefix != -1) {
-			if (!mostIndentedMark || mostIndentedMark < indentationWithPrefix) {
-				mostIndentedMark = indentationWithPrefix
-				mostIndentedLine = line
-			}
+		const indentation = measureIndentation(line.text, configuration.ignoredCharacters)
+		if (indentation > maxIndentation) {
+			maxIndentation = indentation
+			maxIndentationLine = line
 		}
 	}
-	return mostIndentedLine!.lineNumber
+	if (maxIndentationLine) {
+		return maxIndentationLine.lineNumber
+	} else {
+		return null
+	}
 }

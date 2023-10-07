@@ -1,8 +1,8 @@
 import { effect } from 'ng-signals'
 import * as vscode from 'vscode'
 import { Disposable } from 'vscode'
-import { TodoBarExtension } from './extension'
-import { firstIndexNot, uriToFilePath } from './misc'
+import { TodoBarExtension, getParentLines } from './extension'
+import { walkForward, uriToFilePath } from './misc'
 
 /**
  * Handles highlighting the selected lines
@@ -45,21 +45,24 @@ export class Highlights {
   }
 
   private update() {
-    if (!this.ext.currentTodo.$) return
+    if (!this.ext.currentTodo.$?.line) return
     if (!this.ext.activeEditor.$) return
+
+    const lines = getParentLines(this.ext.activeEditor.$, this.ext.currentTodo.$.line)
 
     if (
       this.ext.show &&
-      this.ext.lines.length > 0 &&
+      lines.length > 0 &&
       this.ext.currentTodo.$.file == uriToFilePath(this.ext.activeEditor.$.document.uri)
     ) {
+      const highlightIgnoredCharacters = this.ext.configuration.$.ignoredCharacters + this.ext.configuration.$.lightPrefix + this.ext.configuration.$.prefix
       this.ext.activeEditor.$.setDecorations(this.decorationType, [
-        lineToHighlightRange(this.ext.lines[0], this.ext.configuration.$.ignoredCharacters),
+        lineToHighlightRange(lines[0], highlightIgnoredCharacters),
       ])
       if (this.ext.configuration.$.showParentTasks) {
         this.ext.activeEditor.$.setDecorations(
           this.secondaryDecorationType,
-          this.ext.lines.slice(1).map(line => lineToHighlightRange(line, this.ext.configuration.$.ignoredCharacters))
+          lines.slice(1).map(line => lineToHighlightRange(line, highlightIgnoredCharacters))
         )
       }
     }
@@ -80,6 +83,6 @@ export class Highlights {
  * Returns a range from after the ignoredCharacters til the end of the line.
  */
 function lineToHighlightRange(line: vscode.TextLine, ignoredCharacters: string) {
-  const startIndex = firstIndexNot(line.text, ignoredCharacters)
-  return new vscode.Range(line.range.start.translate(0, startIndex), line.range.end)
+  const afterIgnoredCharacters = walkForward(line.text, ignoredCharacters)
+  return new vscode.Range(line.range.start.translate(0, afterIgnoredCharacters), line.range.end)
 }

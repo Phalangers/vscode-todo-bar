@@ -28,7 +28,7 @@ export class StatusBar {
 /**
  * Formats the text to be displayed in the status bar and window title
  */
-export function formatText(lines: vscode.TextLine[], ignoredCharacters: string, showParentTasks: boolean): string {
+export function formatText(lines: readonly vscode.TextLine[], ignoredCharacters: string, showParentTasks: boolean): string {
 	const cleanLines = lines
 		.map(line => line.text.trim())
 		.map(line => removeLeadingChars(line, ignoredCharacters))

@@ -8,7 +8,7 @@ export function command_setOrClear(ext: TodoBarExtension) {
 	console.log('setOrClear')
 	const activeEditor = ext.activeEditor.$
 
-	assert(activeEditor?.document, "activeEditor?.document")
+	assert(activeEditor?.document, "Open a file first")
 
 	if (ext.lineFocused()) {
 		return command_clearTodo(ext)

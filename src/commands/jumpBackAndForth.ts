@@ -14,12 +14,12 @@ export async function command_jumpBackAndForth(ext: TodoBarExtension) {
 		// Right file ?
 		if (uriToFilePath(ext.activeEditor.$.document.uri) === currentTodo.file) {
 			// Right line ?
-			if (ext.activeEditor.$.selection.active.line == ext.lines[0].lineNumber) {
+			if (ext.activeEditor.$.selection.active.line == ext.lines.$[0].lineNumber) {
 				// Close file
 				await vscode.commands.executeCommand('workbench.action.files.save')
 				return await vscode.commands.executeCommand('workbench.action.closeActiveEditor')
-			} else if (ext.lines.length > 0) {
-				return jumpToLine(ext.activeEditor.$, ext.lines[0])
+			} else if (ext.lines.$.length > 0) {
+				return jumpToLine(ext.activeEditor.$, ext.lines.$[0])
 			}
 		}
 	}

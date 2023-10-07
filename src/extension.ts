@@ -5,7 +5,7 @@ import { command_jumpToFile } from './commands/jumpToFile'
 import { command_setTodo } from './commands/setTodo'
 import { command_setOrClear } from './commands/setOrClear'
 import { Highlights } from './highlight'
-import { indentationLevel, variable } from './misc'
+import { measureIndentation, signal } from './misc'
 import { StatusBar } from './status-bar'
 import { WindowTitle } from './window-title'
 
@@ -20,27 +20,23 @@ const configurationExample = {
 export type Configuration = typeof configurationExample
 
 export class TodoBarExtension {
-  extensionContext: vscode.ExtensionContext
-
-  lines = [] as vscode.TextLine[]
+  configuration = signal(fetchConfiguration() as Configuration)
 
   show = true
-  currentTodo = variable<{ file: string; line: number } | null>(null);
-  activeEditor = variable(vscode.window.activeTextEditor)
+  currentTodo = signal<{ file: string; line: number | null } | null>(null);
+  activeEditor = signal(vscode.window.activeTextEditor)
+  lines = signal<vscode.TextLine[]>([])
 
   statusBar: StatusBar
   highlights: Highlights
   windowTitle: WindowTitle
-  configuration = variable(fetchConfiguration() as Configuration)
 
-  constructor(context: vscode.ExtensionContext) {
-    this.extensionContext = context
+  constructor(public context: vscode.ExtensionContext) {
 
     vscode.workspace.onDidChangeConfiguration(() => {
       this.configuration.$ = fetchConfiguration()
     }, null, context.subscriptions)
 
-    // Editor changes
     vscode.window.onDidChangeActiveTextEditor(editor => {
       this.activeEditor.$ = editor
     }, null, context.subscriptions)
@@ -58,30 +54,6 @@ export class TodoBarExtension {
     this.highlights = new Highlights(this)
 
     context.subscriptions.push(disposable1, disposable2, disposable3, disposable4, disposable5)
-  }
-
-  /**
-  * Reads the current line,
-  * Then reads upwards to find its parent lines (less indentation)
-  */
-  getParentLines(activeEditor: vscode.TextEditor) {
-    let lines = []
-    let currentIndentationLevel = 999
-    for (let i = this.currentTodo.$!.line; i >= 0; i--) {
-      const line = activeEditor.document.lineAt(i)
-      if (line.isEmptyOrWhitespace) {
-        if (lines.length == 0) {
-          throw new Error('Line is empty')
-        } else {
-          continue
-        }
-      }
-      if (indentationLevel(line, " \t") < currentIndentationLevel) {
-        currentIndentationLevel = indentationLevel(line, " \t")
-        lines.push(line)
-      }
-    }
-    return lines
   }
 
   lineFocused() {
@@ -109,4 +81,31 @@ export function deactivate() {
 
 function fetchConfiguration(): Configuration {
   return vscode.workspace.getConfiguration('todo-bar') as any
+}
+
+
+/**
+* Reads the current line,
+* Then reads upwards to find its parent lines (less indentation)
+*/
+export function getParentLines(activeEditor: vscode.TextEditor, lineNb: number) {
+  let lines = []
+  let currentIndentationLevel = 999
+  for (let i = lineNb; i >= 0; i--) {
+    const line = activeEditor.document.lineAt(i)
+    if (line.isEmptyOrWhitespace) {
+      if (lines.length == 0) {
+        throw new Error('Line is empty')
+      } else {
+        continue
+      }
+    }
+    const indentation = measureIndentation(line.text, " \t")
+    console.log(`${indentation} | ${line.text}`)
+    if (indentation < currentIndentationLevel) {
+      currentIndentationLevel = indentation
+      lines.push(line)
+    }
+  }
+  return lines
 }
