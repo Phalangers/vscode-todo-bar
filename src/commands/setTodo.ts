@@ -6,7 +6,7 @@ import { addPrefixesEdits, removePrefixesEdits } from "../text-edits"
 
 export async function command_setTodo(ext: TodoBarExtension) {
 	console.log('setTodo')
-	const activeEditor = ext.activeEditor.$
+	const activeEditor = ext.editor.$
 	if (!activeEditor?.document) return false
 
 	const cursorLine = activeEditor.selection.active.line
@@ -16,17 +16,17 @@ export async function command_setTodo(ext: TodoBarExtension) {
 	}
 	ext.currentTodo.$ = newTodo
 
-	ext.lines.$ = getParentLines(activeEditor, cursorLine)
+	ext.parentLines.$ = getParentLines(activeEditor.document, cursorLine)
 	vscode.workspace.getConfiguration('todo-bar').update('todoFilePath', newTodo.file, vscode.ConfigurationTarget.Workspace)
-	ext.show = true
-	const text = formatText(ext.lines.$, ext.configuration.$.ignoredCharacters, ext.configuration.$.showParentTasks)
+	ext.enabled = true
+	const text = formatText(ext.parentLines.$, ext.configuration.$.ignoredCharacters, ext.configuration.$.showParentTasks)
 	ext.statusBar.displayInStatusBar(text)
 	ext.windowTitle.set(text)
 
 	await activeEditor.edit(editBuilder => {
 		removePrefixesEdits(ext, editBuilder)
 	})
-	ext.lines.$ = getParentLines(activeEditor, cursorLine)
+	ext.parentLines.$ = getParentLines(activeEditor.document, cursorLine)
 	await activeEditor.edit(editBuilder => {
 		addPrefixesEdits(ext, editBuilder)
 	})

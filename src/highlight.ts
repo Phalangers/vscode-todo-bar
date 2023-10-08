@@ -1,7 +1,7 @@
 import { effect } from 'ng-signals'
 import * as vscode from 'vscode'
 import { Disposable } from 'vscode'
-import { TodoBarExtension, getParentLines } from './extension'
+import { Configuration, TodoBarExtension, TodoLocation, getParentLines } from './extension'
 import { walkForward, uriToFilePath } from './misc'
 
 /**
@@ -24,13 +24,6 @@ export class Highlights {
       backgroundColor: { id: 'todobar.secondaryHighlightColor' },
     })
 
-    vscode.workspace.onDidChangeTextDocument(event => {
-      const activeEditor = this.ext.activeEditor.$
-      if (activeEditor && event.document === activeEditor.document) {
-        this.updateThrottled()
-      }
-    }, null, this.subscriptions)
-
     effect(() => this.updateThrottled())
   }
 
@@ -39,28 +32,34 @@ export class Highlights {
       clearTimeout(this.timeout)
       this.timeout = null
     }
+
+    const currentTodo = this.ext.currentTodo.$
+    const configuration = this.ext.configuration.$
+    const enabled = this.ext.enabled
+    const editor = this.ext.editor.$
+
     this.timeout = setTimeout(() => {
-      this.update()
+      this.update(editor, currentTodo, configuration, enabled)
     }, 20)
   }
 
-  private update() {
-    if (!this.ext.currentTodo.$?.line) return
-    if (!this.ext.activeEditor.$) return
+  private update(activeEditor: vscode.TextEditor | undefined, currentTodo: TodoLocation, configuration: Configuration, enabled: boolean) {
+    if (!currentTodo?.line) return
+    if (!activeEditor) return
 
-    const lines = getParentLines(this.ext.activeEditor.$, this.ext.currentTodo.$.line)
+    const lines = getParentLines(activeEditor.document, currentTodo.line)
 
     if (
-      this.ext.show &&
+      enabled &&
       lines.length > 0 &&
-      this.ext.currentTodo.$.file == uriToFilePath(this.ext.activeEditor.$.document.uri)
+      currentTodo.file == uriToFilePath(activeEditor.document.uri)
     ) {
-      const highlightIgnoredCharacters = this.ext.configuration.$.ignoredCharacters + this.ext.configuration.$.lightPrefix + this.ext.configuration.$.prefix
-      this.ext.activeEditor.$.setDecorations(this.decorationType, [
+      const highlightIgnoredCharacters = configuration.ignoredCharacters + configuration.lightPrefix + configuration.prefix
+      activeEditor.setDecorations(this.decorationType, [
         lineToHighlightRange(lines[0], highlightIgnoredCharacters),
       ])
-      if (this.ext.configuration.$.showParentTasks) {
-        this.ext.activeEditor.$.setDecorations(
+      if (configuration.showParentTasks) {
+        activeEditor.setDecorations(
           this.secondaryDecorationType,
           lines.slice(1).map(line => lineToHighlightRange(line, highlightIgnoredCharacters))
         )
@@ -69,8 +68,8 @@ export class Highlights {
   }
 
   clear() {
-    this.ext.activeEditor.$?.setDecorations(this.decorationType, [])
-    this.ext.activeEditor.$?.setDecorations(this.secondaryDecorationType, [])
+    this.ext.editor.$?.setDecorations(this.decorationType, [])
+    this.ext.editor.$?.setDecorations(this.secondaryDecorationType, [])
   }
 
   dispose() {

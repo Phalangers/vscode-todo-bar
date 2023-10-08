@@ -70,18 +70,18 @@ export function signal<T>(value: T) {
 	const sig = ngSignal<T>(value)
 	Object.defineProperties(sig, {
 		$: {
-			get: () => {
-				return sig()
-			},
-			set: (value) => {
-				sig.set(value)
-			},
+			get: () => { return sig() },
+			set: (value) => { sig.set(value) },
 		},
+		changed: {
+			get: () => { sig.mutate(value => value) }
+		}
 	})
 
-	return sig as unknown as typeof sig & {
-		get $(): Readonly<T>
+	return sig as typeof sig & {
+		get $(): T
 		set $(value: T)
+		changed(): void
 	}
 }
 

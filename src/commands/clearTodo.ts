@@ -6,13 +6,13 @@ import { removePrefixesEdits } from "../text-edits"
 export async function command_clearTodo(ext: TodoBarExtension) {
 	console.log('clearTodo')
 
-	ext.show = false
+	ext.enabled = false
 	ext.currentTodo.$ = null
 	vscode.workspace.getConfiguration('todo-bar').update('todoFilePath', null, vscode.ConfigurationTarget.Workspace)
 
 	ext.windowTitle.restore()
 
-	const activeEditor = ext.activeEditor.$
+	const activeEditor = ext.editor.$
 	if (activeEditor) {
 		await activeEditor.edit(editBuilder => {
 			removePrefixesEdits(ext, editBuilder)

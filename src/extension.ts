@@ -2,30 +2,20 @@ import * as vscode from 'vscode'
 import { command_clearTodo } from './commands/clearTodo'
 import { command_jumpBackAndForth } from './commands/jumpBackAndForth'
 import { command_jumpToFile } from './commands/jumpToFile'
-import { command_setTodo } from './commands/setTodo'
 import { command_setOrClear } from './commands/setOrClear'
+import { command_setTodo } from './commands/setTodo'
 import { Highlights } from './highlight'
-import { measureIndentation, signal } from './misc'
+import { findMarkedLine, measureIndentation, signal } from './misc'
 import { StatusBar } from './status-bar'
 import { WindowTitle } from './window-title'
-
-const configurationExample = {
-  showParentTasks: false,
-  lightPrefix: '>',
-  prefix: '>',
-  ignoredCharacters: " \t-",
-  todoFilePath: null as string | null,
-}
-
-export type Configuration = typeof configurationExample
 
 export class TodoBarExtension {
   configuration = signal(fetchConfiguration() as Configuration)
 
-  show = true
-  currentTodo = signal<{ file: string; line: number | null } | null>(null);
-  activeEditor = signal(vscode.window.activeTextEditor)
-  lines = signal<vscode.TextLine[]>([])
+  enabled = true
+  currentTodo = signal<TodoLocation>(null);
+  editor = signal(vscode.window.activeTextEditor)
+  parentLines = signal<vscode.TextLine[]>([])
 
   statusBar: StatusBar
   highlights: Highlights
@@ -38,28 +28,32 @@ export class TodoBarExtension {
     }, null, context.subscriptions)
 
     vscode.window.onDidChangeActiveTextEditor(editor => {
-      this.activeEditor.$ = editor
+      this.editor.$ = editor
     }, null, context.subscriptions)
+
+    vscode.workspace.onDidChangeTextDocument(event => {
+      if (!this.currentTodo.$) return
+      const activeEditor = this.editor.$
+      if (activeEditor && event.document === activeEditor.document) {
+        this.currentTodo.$.line = findMarkedLine(activeEditor.document, this.configuration.$)
+        this.currentTodo.changed()
+      }
+    }, null, context.subscriptions)
+
 
     this.statusBar = new StatusBar(this.configuration)
     this.windowTitle = new WindowTitle()
-
-    // Register commands
-    const disposable1 = vscode.commands.registerCommand('todo-bar.set', () => command_setTodo(this))
-    const disposable2 = vscode.commands.registerCommand('todo-bar.clear', () => command_clearTodo(this))
-    const disposable3 = vscode.commands.registerCommand('todo-bar.set-or-clear', () => command_setOrClear(this))
-    const disposable4 = vscode.commands.registerCommand('todo-bar.jump-to-file', () => command_jumpToFile(this))
-    const disposable5 = vscode.commands.registerCommand('todo-bar.jump-back-and-forth', () => command_jumpBackAndForth(this))
-
     this.highlights = new Highlights(this)
 
-    context.subscriptions.push(disposable1, disposable2, disposable3, disposable4, disposable5)
-  }
+    const commands = [
+      vscode.commands.registerCommand('todo-bar.set', () => command_setTodo(this)),
+      vscode.commands.registerCommand('todo-bar.clear', () => command_clearTodo(this)),
+      vscode.commands.registerCommand('todo-bar.set-or-clear', () => command_setOrClear(this)),
+      vscode.commands.registerCommand('todo-bar.jump-to-file', () => command_jumpToFile(this)),
+      vscode.commands.registerCommand('todo-bar.jump-back-and-forth', () => command_jumpBackAndForth(this)),
+    ]
 
-  lineFocused() {
-    if (!this.currentTodo.$) return false
-    if (!this.activeEditor.$) return false
-    return this.currentTodo.$.line == this.activeEditor.$.selection.active.line
+    context.subscriptions.push(...commands)
   }
 
   dispose() {
@@ -67,6 +61,20 @@ export class TodoBarExtension {
   }
 }
 
+const configurationExample = {
+  showParentTasks: false,
+  lightPrefix: '>',
+  prefix: '>',
+  ignoredCharacters: " \t-",
+  todoFilePath: null as string | null,
+}
+
+export type Configuration = typeof configurationExample
+
+export type TodoLocation = {
+  file: string
+  line: number | null
+} | null
 
 
 let extension: TodoBarExtension
@@ -88,20 +96,15 @@ function fetchConfiguration(): Configuration {
 * Reads the current line,
 * Then reads upwards to find its parent lines (less indentation)
 */
-export function getParentLines(activeEditor: vscode.TextEditor, lineNb: number) {
+export function getParentLines(document: vscode.TextDocument, lineNb: number) {
   let lines = []
   let currentIndentationLevel = 999
   for (let i = lineNb; i >= 0; i--) {
-    const line = activeEditor.document.lineAt(i)
+    const line = document.lineAt(i)
     if (line.isEmptyOrWhitespace) {
-      if (lines.length == 0) {
-        throw new Error('Line is empty')
-      } else {
-        continue
-      }
+      continue
     }
     const indentation = measureIndentation(line.text, " \t")
-    console.log(`${indentation} | ${line.text}`)
     if (indentation < currentIndentationLevel) {
       currentIndentationLevel = indentation
       lines.push(line)

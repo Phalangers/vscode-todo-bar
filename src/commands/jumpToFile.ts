@@ -26,17 +26,18 @@ export async function command_jumpToFile(ext: TodoBarExtension) {
 		throw new Error('Untitled file containing the todo has been lost')
 	}
 
-	const activeEditor = ext.activeEditor.$
+	const activeEditor = ext.editor.$
 	if (activeEditor) {
-		if (ext.currentTodo.$.line) {
-			ext.currentTodo.mutate(todo => {
-				todo!.line = findMarkedLine(activeEditor.document, ext.configuration.$)
-			})
-			ext.lines.$ = getParentLines(activeEditor, ext.currentTodo.$.line)
+		if (ext.currentTodo.$) {
+			const newCurrentLine = findMarkedLine(activeEditor.document, ext.configuration.$)
+			ext.currentTodo.$.line = newCurrentLine
+			ext.currentTodo.changed()
 		}
 
-		if (ext.lines.$?.length > 0) {
-			jumpToLine(activeEditor, ext.lines.$[0])
+		ext.parentLines.$ = getParentLines(activeEditor.document, ext.currentTodo.$.line!)
+
+		if (ext.parentLines.$?.length > 0) {
+			jumpToLine(activeEditor, ext.parentLines.$[0])
 		}
 		ext.highlights.updateThrottled()
 	}

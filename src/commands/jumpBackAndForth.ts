@@ -10,16 +10,16 @@ export async function command_jumpBackAndForth(ext: TodoBarExtension) {
 	const currentTodo = ext.currentTodo.$
 
 	// File ?
-	if (ext.activeEditor.$ && currentTodo) {
+	if (ext.editor.$ && currentTodo) {
 		// Right file ?
-		if (uriToFilePath(ext.activeEditor.$.document.uri) === currentTodo.file) {
+		if (uriToFilePath(ext.editor.$.document.uri) === currentTodo.file) {
 			// Right line ?
-			if (ext.activeEditor.$.selection.active.line == ext.lines.$[0].lineNumber) {
+			if (ext.editor.$.selection.active.line == ext.parentLines.$[0].lineNumber) {
 				// Close file
 				await vscode.commands.executeCommand('workbench.action.files.save')
 				return await vscode.commands.executeCommand('workbench.action.closeActiveEditor')
-			} else if (ext.lines.$.length > 0) {
-				return jumpToLine(ext.activeEditor.$, ext.lines.$[0])
+			} else if (ext.parentLines.$.length > 0) {
+				return jumpToLine(ext.editor.$, ext.parentLines.$[0])
 			}
 		}
 	}
