@@ -2,7 +2,7 @@ import { effect } from 'ng-signals'
 import * as vscode from 'vscode'
 import { Disposable } from 'vscode'
 import { Configuration, TodoBarExtension, TodoLocation, getParentLines } from './extension'
-import { walkForward, uriToFilePath } from './misc'
+import { walkForward } from './misc'
 
 /**
  * Handles highlighting the selected lines
@@ -36,7 +36,7 @@ export class Highlights {
     const currentTodo = this.ext.currentTodo.$
     const configuration = this.ext.configuration.$
     const enabled = this.ext.enabled
-    const editor = this.ext.editor.$
+    const editor = this.ext.activeEditor.$
 
     this.timeout = setTimeout(() => {
       this.update(editor, currentTodo, configuration, enabled)
@@ -52,9 +52,10 @@ export class Highlights {
     if (
       enabled &&
       lines.length > 0 &&
-      currentTodo.file == uriToFilePath(activeEditor.document.uri)
+      currentTodo.fileUri == activeEditor.document.uri
     ) {
-      const highlightIgnoredCharacters = configuration.ignoredCharacters + configuration.lightPrefix + configuration.prefix
+      this.clear()
+      const highlightIgnoredCharacters = configuration.ignoredCharacters + configuration.lightMark + configuration.mark
       activeEditor.setDecorations(this.decorationType, [
         lineToHighlightRange(lines[0], highlightIgnoredCharacters),
       ])
@@ -68,8 +69,8 @@ export class Highlights {
   }
 
   clear() {
-    this.ext.editor.$?.setDecorations(this.decorationType, [])
-    this.ext.editor.$?.setDecorations(this.secondaryDecorationType, [])
+    this.ext.activeEditor.$?.setDecorations(this.decorationType, [])
+    this.ext.activeEditor.$?.setDecorations(this.secondaryDecorationType, [])
   }
 
   dispose() {

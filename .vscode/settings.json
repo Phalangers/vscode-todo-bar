@@ -21,13 +21,9 @@
         "statusBar.foreground": "#15202b",
         "statusBarItem.hoverBackground": "#f7df1e",
         "statusBarItem.remoteBackground": "#f9e64f",
-        "statusBarItem.remoteForeground": "#15202b",
-        "titleBar.activeBackground": "#f9e64f",
-        "titleBar.activeForeground": "#15202b",
-        "titleBar.inactiveBackground": "#f9e64f99",
-        "titleBar.inactiveForeground": "#15202b99",
-        "commandCenter.border": "#15202b99"
+        "statusBarItem.remoteForeground": "#15202b"
     },
     "peacock.remoteColor": "#f9e64f",
-    "window.title": "when a line is highlighted, moving the line highlights the wrong line ⇒ on text change - highlight.update"
+    "window.title": "cannot resolve file ssh-remote:......@phalanger/tabulr/private/notes.txt",
+    "todo-bar.todoFilePath": "/home/david/code/vscode-todo-bar/private/notes.txt"
 }

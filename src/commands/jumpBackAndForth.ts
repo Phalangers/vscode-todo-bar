@@ -1,8 +1,7 @@
 import * as vscode from "vscode"
+import { TodoBarExtension } from "../extension"
 import { jumpToLine } from '../misc'
 import { command_jumpToFile } from './jumpToFile'
-import { TodoBarExtension } from "../extension"
-import { uriToFilePath } from "../misc"
 
 
 export async function command_jumpBackAndForth(ext: TodoBarExtension) {
@@ -10,16 +9,16 @@ export async function command_jumpBackAndForth(ext: TodoBarExtension) {
 	const currentTodo = ext.currentTodo.$
 
 	// File ?
-	if (ext.editor.$ && currentTodo) {
+	if (ext.activeEditor.$ && currentTodo) {
 		// Right file ?
-		if (uriToFilePath(ext.editor.$.document.uri) === currentTodo.file) {
+		if (ext.activeEditor.$.document.uri === currentTodo.fileUri) {
 			// Right line ?
-			if (ext.editor.$.selection.active.line == ext.parentLines.$[0].lineNumber) {
+			if (ext.activeEditor.$.selection.active.line == ext.parentLines.$[0].lineNumber) {
 				// Close file
 				await vscode.commands.executeCommand('workbench.action.files.save')
 				return await vscode.commands.executeCommand('workbench.action.closeActiveEditor')
 			} else if (ext.parentLines.$.length > 0) {
-				return jumpToLine(ext.editor.$, ext.parentLines.$[0])
+				return jumpToLine(ext.activeEditor.$, ext.parentLines.$[0])
 			}
 		}
 	}

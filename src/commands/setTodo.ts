@@ -1,34 +1,33 @@
 import * as vscode from "vscode"
-import { TodoBarExtension, getParentLines } from "../extension"
-import { uriToFilePath } from "../misc"
+import { TodoBarExtension, TodoLocation, getParentLines } from "../extension"
 import { formatText } from "../status-bar"
-import { addPrefixesEdits, removePrefixesEdits } from "../text-edits"
+import { addMarksEdits, removeMarksEdits, } from "../text-edits"
 
 export async function command_setTodo(ext: TodoBarExtension) {
 	console.log('setTodo')
-	const activeEditor = ext.editor.$
+	const activeEditor = ext.activeEditor.$
 	if (!activeEditor?.document) return false
 
 	const cursorLine = activeEditor.selection.active.line
-	const newTodo = {
+	const newTodo: TodoLocation = {
 		line: cursorLine,
-		file: uriToFilePath(activeEditor?.document.uri)
+		fileUri: activeEditor?.document.uri,
 	}
 	ext.currentTodo.$ = newTodo
 
 	ext.parentLines.$ = getParentLines(activeEditor.document, cursorLine)
-	vscode.workspace.getConfiguration('todo-bar').update('todoFilePath', newTodo.file, vscode.ConfigurationTarget.Workspace)
+	vscode.workspace.getConfiguration('todo-bar').update('todoFilePath', newTodo.fileUri, vscode.ConfigurationTarget.WorkspaceFolder)
 	ext.enabled = true
 	const text = formatText(ext.parentLines.$, ext.configuration.$.ignoredCharacters, ext.configuration.$.showParentTasks)
 	ext.statusBar.displayInStatusBar(text)
 	ext.windowTitle.set(text)
 
 	await activeEditor.edit(editBuilder => {
-		removePrefixesEdits(ext, editBuilder)
+		removeMarksEdits(ext, editBuilder)
 	})
 	ext.parentLines.$ = getParentLines(activeEditor.document, cursorLine)
 	await activeEditor.edit(editBuilder => {
-		addPrefixesEdits(ext, editBuilder)
+		addMarksEdits(ext, editBuilder)
 	})
 	await vscode.commands.executeCommand('workbench.action.files.save')
 

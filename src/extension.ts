@@ -8,13 +8,14 @@ import { Highlights } from './highlight'
 import { findMarkedLine, measureIndentation, signal } from './misc'
 import { StatusBar } from './status-bar'
 import { WindowTitle } from './window-title'
+import { effect } from 'ng-signals'
 
 export class TodoBarExtension {
   configuration = signal(fetchConfiguration() as Configuration)
 
   enabled = true
   currentTodo = signal<TodoLocation>(null);
-  editor = signal(vscode.window.activeTextEditor)
+  activeEditor = signal(vscode.window.activeTextEditor)
   parentLines = signal<vscode.TextLine[]>([])
 
   statusBar: StatusBar
@@ -28,18 +29,23 @@ export class TodoBarExtension {
     }, null, context.subscriptions)
 
     vscode.window.onDidChangeActiveTextEditor(editor => {
-      this.editor.$ = editor
+      this.activeEditor.$ = editor
     }, null, context.subscriptions)
 
     vscode.workspace.onDidChangeTextDocument(event => {
       if (!this.currentTodo.$) return
-      const activeEditor = this.editor.$
+      const activeEditor = this.activeEditor.$
       if (activeEditor && event.document === activeEditor.document) {
         this.currentTodo.$.line = findMarkedLine(activeEditor.document, this.configuration.$)
         this.currentTodo.changed()
+      } else {
+        debugger
       }
     }, null, context.subscriptions)
 
+    effect(() => {
+      console.log('currentTodoUri: ' + this.currentTodo()?.fileUri)
+    })
 
     this.statusBar = new StatusBar(this.configuration)
     this.windowTitle = new WindowTitle()
@@ -62,9 +68,9 @@ export class TodoBarExtension {
 }
 
 const configurationExample = {
-  showParentTasks: false,
-  lightPrefix: '>',
-  prefix: '>',
+  showParentTasks: true,
+  lightMark: '>',
+  mark: '>',
   ignoredCharacters: " \t-",
   todoFilePath: null as string | null,
 }
@@ -72,7 +78,7 @@ const configurationExample = {
 export type Configuration = typeof configurationExample
 
 export type TodoLocation = {
-  file: string
+  fileUri: vscode.Uri
   line: number | null
 } | null
 

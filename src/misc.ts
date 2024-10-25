@@ -25,15 +25,17 @@ export function walkForward(str: string, chars: string, startIndex = 0) {
 	return i
 }
 
+
+
 /**
  * Given a vscode.TextLine, counts the number of leading tabs/spaces in line.text.
  */
-export function measureIndentation(line: string, ignoredCharacters: string) {
+export function measureIndentation(text: string, ignoredCharacters: string) {
+	const startOfText = walkForward(text, ignoredCharacters)
+
 	let indentation = 0
-	for (const c of line) {
-		if (!ignoredCharacters.includes(c)) {
-			break
-		}
+	for (let i = 0; i < startOfText; i++) {
+		const c = text[i]
 		if (c == '\t') indentation += 4
 		else indentation++
 	}
@@ -54,16 +56,12 @@ export function removeLeadingChars(text: string, symbols: string): string {
 
 export function getMarkRange(ext: TodoBarExtension, line: vscode.TextLine) {
 	const configuration = ext.configuration.$
-	if (!line.text.includes(configuration.lightPrefix) && !line.text.includes(configuration.prefix)) return null
+	if (!line.text.includes(configuration.lightMark) && !line.text.includes(configuration.mark)) return null
 
-	const beginPrefix = walkForward(line.text, configuration.ignoredCharacters)
-	const endPrefix = walkForward(line.text, configuration.lightPrefix + configuration.prefix, beginPrefix)
+	const beginMark = walkForward(line.text, configuration.ignoredCharacters)
+	const endMark = walkForward(line.text, configuration.lightMark + configuration.mark, beginMark)
 
-	return new vscode.Range(line.lineNumber, beginPrefix, line.lineNumber, endPrefix)
-}
-
-export function uriToFilePath(uri: vscode.Uri) {
-	return uri?.toString().slice(7)
+	return new vscode.Range(line.lineNumber, beginMark, line.lineNumber, endMark)
 }
 
 export function signal<T>(value: T) {
@@ -74,7 +72,7 @@ export function signal<T>(value: T) {
 			set: (value) => { sig.set(value) },
 		},
 		changed: {
-			get: () => { sig.mutate(value => value) }
+			value: () => { sig.mutate(value => value) }
 		}
 	})
 
@@ -97,7 +95,9 @@ export function findMarkedLine(document: vscode.TextDocument, configuration: Con
 	let maxIndentation = 0
 	for (let i = 0; i < document.lineCount; i++) {
 		const line = document.lineAt(i)
-		if (!line.text.includes(configuration.prefix)) continue
+
+		if (!lineIsMarked(line, configuration)) continue
+
 		const indentation = measureIndentation(line.text, configuration.ignoredCharacters)
 		if (indentation > maxIndentation) {
 			maxIndentation = indentation
@@ -109,4 +109,24 @@ export function findMarkedLine(document: vscode.TextDocument, configuration: Con
 	} else {
 		return null
 	}
+}
+
+export function lineIsMarked(line: vscode.TextLine, configuration: Configuration) {
+	if (!line.text.includes(configuration.mark)) return false
+
+	const startOfText = walkForward(line.text, configuration.ignoredCharacters)
+	if (!configuration.mark.includes(line.text[startOfText])) return false
+
+	return true
+}
+
+export function lineIsMarkedAll(line: vscode.TextLine, c: Configuration) {
+	if (!line.text.includes(c.mark) && !line.text.includes(c.lightMark)) {
+		return false
+	}
+
+	const startOfText = walkForward(line.text, c.ignoredCharacters)
+	if (!(c.mark + c.lightMark).includes(line.text[startOfText])) return false
+
+	return true
 }

@@ -6,10 +6,10 @@ export class WindowTitle {
 	previousWindowTitle = this.windowConfig.get('title')
 
 	set(title: string) {
-		this.windowConfig.update('title', title, false)
+		this.windowConfig.update('title', title, vscode.ConfigurationTarget.WorkspaceFolder)
 	}
 
 	restore() {
-		this.windowConfig.update('title', this.previousWindowTitle, false)
+		this.windowConfig.update('title', this.previousWindowTitle, vscode.ConfigurationTarget.WorkspaceFolder)
 	}
 }

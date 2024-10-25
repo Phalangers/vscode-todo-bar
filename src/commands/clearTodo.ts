@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 import { TodoBarExtension } from "../extension"
-import { removePrefixesEdits } from "../text-edits"
+import { removeMarksEdits } from "../text-edits"
 
 
 export async function command_clearTodo(ext: TodoBarExtension) {
@@ -8,14 +8,14 @@ export async function command_clearTodo(ext: TodoBarExtension) {
 
 	ext.enabled = false
 	ext.currentTodo.$ = null
-	vscode.workspace.getConfiguration('todo-bar').update('todoFilePath', null, vscode.ConfigurationTarget.Workspace)
+	vscode.workspace.getConfiguration('todo-bar').update('todoFilePath', null, vscode.ConfigurationTarget.WorkspaceFolder)
 
 	ext.windowTitle.restore()
 
-	const activeEditor = ext.editor.$
+	const activeEditor = ext.activeEditor.$
 	if (activeEditor) {
 		await activeEditor.edit(editBuilder => {
-			removePrefixesEdits(ext, editBuilder)
+			removeMarksEdits(ext, editBuilder)
 		})
 
 		ext.highlights.clear()

@@ -84,15 +84,15 @@
 					"default": true,
 					"scope": "window"
 				},
-				"todo-bar.lightPrefix": {
+				"todo-bar.lightMark": {
 					"type": "string",
-					"description": "The prefix to show on the selected line's parents.",
+					"description": "The mark to show on the selected line's parents.",
 					"default": ">",
 					"scope": "window"
 				},
-				"todo-bar.prefix": {
+				"todo-bar.mark": {
 					"type": "string",
-					"description": "The prefix to show on the selected line.",
+					"description": "The mark to show on the selected line.",
 					"default": ">",
 					"scope": "window"
 				},
@@ -136,7 +136,7 @@
 	"scripts": {
 		"compile": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
 		"watch": "npm run compile -- --sourcemap --watch",
-		"vscode:prepublish": "npm run compile -- --minify",
+		"vscode:prepublish": "npm run compile",
 		"pretest": "npm run compile && npm run lint",
 		"lint": "eslint src --ext ts",
 		"test": "node ./out/test/runTest.js"

@@ -9,7 +9,7 @@ export async function command_jumpToFile(ext: TodoBarExtension) {
 	const todoFilePath = ext.configuration.$.todoFilePath
 	if (todoFilePath) {
 		ext.currentTodo.$ = {
-			file: todoFilePath,
+			fileUri: todoFilePath,
 			line: -1
 		}
 	} else {
@@ -18,7 +18,7 @@ export async function command_jumpToFile(ext: TodoBarExtension) {
 
 	if (!ext.currentTodo.$) return error(`Use command [Set Todo] first.`)
 
-	const doc = await vscode.workspace.openTextDocument(ext.currentTodo.$.file)
+	const doc = await vscode.workspace.openTextDocument(ext.currentTodo.$.fileUri)
 	await vscode.window.showTextDocument(doc)
 
 	if (doc.fileName.startsWith('Untitled-')) {
@@ -26,7 +26,7 @@ export async function command_jumpToFile(ext: TodoBarExtension) {
 		throw new Error('Untitled file containing the todo has been lost')
 	}
 
-	const activeEditor = ext.editor.$
+	const activeEditor = ext.activeEditor.$
 	if (activeEditor) {
 		if (ext.currentTodo.$) {
 			const newCurrentLine = findMarkedLine(activeEditor.document, ext.configuration.$)

@@ -6,7 +6,7 @@ import { command_setTodo } from './setTodo'
 
 export function command_setOrClear(ext: TodoBarExtension) {
 	console.log('setOrClear')
-	const activeEditor = ext.editor.$
+	const activeEditor = ext.activeEditor.$
 
 	assert(activeEditor?.document, "Open a file first")
 
@@ -19,6 +19,6 @@ export function command_setOrClear(ext: TodoBarExtension) {
 
 function lineFocused(ext: TodoBarExtension) {
 	if (!ext.currentTodo.$) return false
-	if (!ext.editor.$) return false
-	return ext.currentTodo.$.line == ext.editor.$.selection.active.line
+	if (!ext.activeEditor.$) return false
+	return ext.currentTodo.$.line == ext.activeEditor.$.selection.active.line
 }
