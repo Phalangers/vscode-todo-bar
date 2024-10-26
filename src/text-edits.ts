@@ -15,10 +15,12 @@ export function removeMarkEdit(ext: TodoBarExtension, editBuilder: vscode.TextEd
 	assert(document, "removeMarksEdits: no active editor")
 	for (let i = 0; i < document.lineCount; i++) {
 		const line = document.lineAt(i)
-		if (!lineIsMarked(line, ext.configuration.$)) continue
-		const markRange = getMarkRange(ext, line)
-		if (markRange) {
-			editBuilder.replace(markRange, " ".repeat(rangeSize(markRange)))
+		if (lineIsMarked(line, ext.configuration.$)) {
+			const markRange = getMarkRange(ext, line)
+			if (markRange) {
+				editBuilder.replace(markRange, " ")
+				break
+			}
 		}
 	}
 }

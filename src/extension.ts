@@ -8,7 +8,7 @@ import { Highlights } from './highlight'
 import { findMarkedLine, measureIndentation, signal } from './misc'
 import { StatusBar } from './status-bar'
 import { WindowTitle } from './window-title'
-import { effect } from 'ng-signals'
+import { computed, effect } from 'ng-signals'
 
 export class TodoBarExtension {
   configuration = signal(fetchConfiguration() as Configuration)
@@ -69,7 +69,6 @@ export class TodoBarExtension {
 
 const configurationExample = {
   showParentTasks: true,
-  lightMark: '>',
   mark: '>',
   ignoredCharacters: " \t-",
   todoFilePath: null as string | null,

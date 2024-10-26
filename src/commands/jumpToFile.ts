@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
-import { TodoBarExtension, getParentLines } from "../extension"
-import { assert, error, findMarkedLine, jumpToLine } from '../misc'
+import { getParentLines, TodoBarExtension } from "../extension"
+import { assert, error, findMarkedLine, jumpToLine, NO_CURRENT_TODO_ERROR } from '../misc'
 
 
 export async function command_jumpToFile(ext: TodoBarExtension) {
@@ -34,14 +34,14 @@ export async function command_jumpToFile(ext: TodoBarExtension) {
 			ext.currentTodo.changed()
 		}
 
-		ext.parentLines.$ = getParentLines(activeEditor.document, ext.currentTodo.$.line!)
-
-		if (ext.parentLines.$?.length > 0) {
+		if (ext.currentTodo.$.line == null) {
+			error('Could not find the todo in the file')
+		} else {
+			ext.parentLines.$ = getParentLines(activeEditor.document, ext.currentTodo.$.line)
+			assert(ext.parentLines.$.length > 0)
 			jumpToLine(activeEditor, ext.parentLines.$[0])
+			ext.highlights.updateThrottled()
 		}
-		ext.highlights.updateThrottled()
 	}
 
 }
-
-const NO_CURRENT_TODO_ERROR = `Can't jump to line, it is not set.\nUse command [Set Todo] (default: ctrl+alt+q) to set a todo.`

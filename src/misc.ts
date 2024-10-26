@@ -5,12 +5,15 @@ import { Configuration, TodoBarExtension } from './extension'
 export function assert(condition: any, message = 'assert failed'): asserts condition {
 	if (!condition) {
 		error(message)
+		throw new Error(message)
 	}
 }
 
 export function error(message: string) {
 	return vscode.window.showErrorMessage("Extension: TodoBar: " + message)
 }
+
+export const NO_CURRENT_TODO_ERROR = `Can't jump to line, it is not set.\nUse command [Set Todo] (default: ctrl+alt+q) to set a todo.`
 
 /**
  * Walks forward as long as the `chars` match the string.
@@ -54,15 +57,11 @@ export function removeLeadingChars(text: string, symbols: string): string {
 	}
 }
 
-export function getMarkRange(ext: TodoBarExtension, line: vscode.TextLine) {
+export function getMarkRange(ext: TodoBarExtension, line: vscode.TextLine): vscode.Range | null {
 	const configuration = ext.configuration.$
-	const markChars = configuration.lightMark + configuration.mark
-	if (!line.text.includes(configuration.lightMark) && !line.text.includes(configuration.mark)) return null
-
+	if (!line.text.includes(configuration.mark)) return null
 	const beginMark = walkForward(line.text, configuration.ignoredCharacters)
-	const endMark = walkForward(line.text, markChars, beginMark)
-
-	return new vscode.Range(line.lineNumber, beginMark, line.lineNumber, endMark)
+	return new vscode.Range(line.lineNumber, beginMark, line.lineNumber, beginMark + 1)
 }
 
 export function signal<T>(value: T) {
@@ -96,20 +95,11 @@ export function findMarkedLine(document: vscode.TextDocument, configuration: Con
 	let maxIndentation = 0
 	for (let i = 0; i < document.lineCount; i++) {
 		const line = document.lineAt(i)
-
-		if (!lineIsMarked(line, configuration)) continue
-
-		const indentation = measureIndentation(line.text, configuration.ignoredCharacters)
-		if (indentation > maxIndentation) {
-			maxIndentation = indentation
-			maxIndentationLine = line
+		if (lineIsMarked(line, configuration)) {
+			return line.lineNumber
 		}
 	}
-	if (maxIndentationLine) {
-		return maxIndentationLine.lineNumber
-	} else {
-		return null
-	}
+	return null
 }
 
 export function lineIsMarked(line: vscode.TextLine, configuration: Configuration) {
@@ -117,17 +107,6 @@ export function lineIsMarked(line: vscode.TextLine, configuration: Configuration
 
 	const startOfText = walkForward(line.text, configuration.ignoredCharacters)
 	if (!configuration.mark.includes(line.text[startOfText])) return false
-
-	return true
-}
-
-export function lineIsMarkedAll(line: vscode.TextLine, c: Configuration) {
-	if (!line.text.includes(c.mark) && !line.text.includes(c.lightMark)) {
-		return false
-	}
-
-	const startOfText = walkForward(line.text, c.ignoredCharacters)
-	if (!(c.mark + c.lightMark).includes(line.text[startOfText])) return false
 
 	return true
 }

@@ -84,12 +84,6 @@
 					"default": true,
 					"scope": "window"
 				},
-				"todo-bar.lightMark": {
-					"type": "string",
-					"description": "The mark to show on the selected line's parents.",
-					"default": "-",
-					"scope": "window"
-				},
 				"todo-bar.mark": {
 					"type": "string",
 					"description": "The mark to show on the selected line.",
@@ -134,10 +128,10 @@
 		]
 	},
 	"scripts": {
-		"compile": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
-		"watch": "npm run compile -- --sourcemap --watch",
-		"vscode:prepublish": "npm run compile",
-		"pretest": "npm run compile && npm run lint",
+		"build": "esbuild ./src/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
+		"watch": "npm run build -- --sourcemap --watch",
+		"vscode:prepublish": "npm run build",
+		"pretest": "npm run build && npm run lint",
 		"lint": "eslint src --ext ts",
 		"test": "node ./out/test/runTest.js"
 	},
