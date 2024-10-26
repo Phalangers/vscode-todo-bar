@@ -1,6 +1,6 @@
 import * as vscode from "vscode"
 import { TodoBarExtension } from "../extension"
-import { removeMarksEdits } from "../text-edits"
+import { removeMarkEdit } from "../text-edits"
 
 
 export async function command_clearTodo(ext: TodoBarExtension) {
@@ -15,7 +15,7 @@ export async function command_clearTodo(ext: TodoBarExtension) {
 	const activeEditor = ext.activeEditor.$
 	if (activeEditor) {
 		await activeEditor.edit(editBuilder => {
-			removeMarksEdits(ext, editBuilder)
+			removeMarkEdit(ext, editBuilder)
 		})
 
 		ext.highlights.clear()

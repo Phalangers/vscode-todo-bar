@@ -1,7 +1,7 @@
 import * as vscode from "vscode"
 import { TodoBarExtension, TodoLocation, getParentLines } from "../extension"
 import { formatText } from "../status-bar"
-import { addMarksEdits, removeMarksEdits, } from "../text-edits"
+import { addMarkEdit, removeMarkEdit, } from "../text-edits"
 
 export async function command_setTodo(ext: TodoBarExtension) {
 	console.log('setTodo')
@@ -23,11 +23,11 @@ export async function command_setTodo(ext: TodoBarExtension) {
 	ext.windowTitle.set(text)
 
 	await activeEditor.edit(editBuilder => {
-		removeMarksEdits(ext, editBuilder)
+		removeMarkEdit(ext, editBuilder)
 	})
 	ext.parentLines.$ = getParentLines(activeEditor.document, cursorLine)
 	await activeEditor.edit(editBuilder => {
-		addMarksEdits(ext, editBuilder)
+		addMarkEdit(ext, editBuilder)
 	})
 	await vscode.commands.executeCommand('workbench.action.files.save')
 

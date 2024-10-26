@@ -2,9 +2,9 @@ import { signal as ngSignal } from 'ng-signals'
 import * as vscode from 'vscode'
 import { Configuration, TodoBarExtension } from './extension'
 
-export function assert(condition?: any, message?: string) {
+export function assert(condition: any, message = 'assert failed'): asserts condition {
 	if (!condition) {
-		error(message || 'assert failed')
+		error(message)
 	}
 }
 

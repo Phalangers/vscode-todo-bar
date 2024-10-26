@@ -1,22 +1,18 @@
 import * as vscode from 'vscode'
 import { TodoBarExtension } from './extension'
-import { getMarkRange, lineIsMarked, walkForward } from "./misc"
+import { assert, getMarkRange, lineIsMarked, walkForward } from "./misc"
 
-export function addMarksEdits(ext: TodoBarExtension, editBuilder: vscode.TextEditorEdit) {
-	for (let i = 0; i < ext.parentLines.$.length; i++) {
-		const line = ext.parentLines.$[i]
-		const afterIgnored = walkForward(line.text, ext.configuration.$.ignoredCharacters)
-		const start = afterIgnored == 0 ? afterIgnored : afterIgnored - 1
-		const mark = i == 0 ? ext.configuration.$.mark : ext.configuration.$.lightMark
-		const range = new vscode.Range(line.lineNumber, start, line.lineNumber, afterIgnored)
-		if (i == 0) {
-			editBuilder.replace(range, mark)
-		}
-	}
+export function addMarkEdit(ext: TodoBarExtension, editBuilder: vscode.TextEditorEdit) {
+	const line = ext.parentLines.$[0]
+	const afterIgnored = walkForward(line.text, ext.configuration.$.ignoredCharacters)
+	const start = afterIgnored == 0 ? afterIgnored : afterIgnored - 1
+	const range = new vscode.Range(line.lineNumber, start, line.lineNumber, afterIgnored)
+	editBuilder.replace(range, ext.configuration.$.mark)
 }
 
-export function removeMarksEdits(ext: TodoBarExtension, editBuilder: vscode.TextEditorEdit) {
-	const document = ext.activeEditor.$?.document!
+export function removeMarkEdit(ext: TodoBarExtension, editBuilder: vscode.TextEditorEdit) {
+	const document = ext.activeEditor.$?.document
+	assert(document, "removeMarksEdits: no active editor")
 	for (let i = 0; i < document.lineCount; i++) {
 		const line = document.lineAt(i)
 		if (!lineIsMarked(line, ext.configuration.$)) continue
