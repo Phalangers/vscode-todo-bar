@@ -2,7 +2,7 @@
 	"name": "vscode-todo-bar",
 	"displayName": "Todo Bar",
 	"description": "Focus on the task at hand. It stays in your status bar.",
-	"version": "0.10.0",
+	"version": "0.11.0",
 	"author": "Phalangers",
 	"publisher": "phalangers",
 	"repository": {
