@@ -24,6 +24,4 @@
         "statusBarItem.remoteForeground": "#15202b"
     },
     "peacock.remoteColor": "#f9e64f",
-    "window.title": "cannot resolve file ssh-remote:......@phalanger/tabulr/private/notes.txt",
-    "todo-bar.todoFilePath": "/home/david/code/vscode-todo-bar/private/notes.txt"
 }

@@ -15,3 +15,4 @@ src/**
 tsconfig.json
 tslint.json
 private
+assets/*.gif

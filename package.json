@@ -87,7 +87,7 @@
 				"todo-bar.lightMark": {
 					"type": "string",
 					"description": "The mark to show on the selected line's parents.",
-					"default": ">",
+					"default": "-",
 					"scope": "window"
 				},
 				"todo-bar.mark": {

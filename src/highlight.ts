@@ -55,14 +55,13 @@ export class Highlights {
       currentTodo.fileUri == activeEditor.document.uri
     ) {
       this.clear()
-      const highlightIgnoredCharacters = configuration.ignoredCharacters + configuration.lightMark + configuration.mark
       activeEditor.setDecorations(this.decorationType, [
-        lineToHighlightRange(lines[0], highlightIgnoredCharacters),
+        lineToHighlightRange(lines[0], ' \t'),
       ])
       if (configuration.showParentTasks) {
         activeEditor.setDecorations(
           this.secondaryDecorationType,
-          lines.slice(1).map(line => lineToHighlightRange(line, highlightIgnoredCharacters))
+          lines.slice(1).map(line => lineToHighlightRange(line, ' \t'))
         )
       }
     }

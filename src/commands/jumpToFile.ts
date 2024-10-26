@@ -9,14 +9,14 @@ export async function command_jumpToFile(ext: TodoBarExtension) {
 	const todoFilePath = ext.configuration.$.todoFilePath
 	if (todoFilePath) {
 		ext.currentTodo.$ = {
-			fileUri: todoFilePath,
+			fileUri: vscode.Uri.file(todoFilePath),
 			line: -1
 		}
 	} else {
-		assert(ext.currentTodo, `Use command [Set Todo] first.`)
+		assert(ext.currentTodo, NO_CURRENT_TODO_ERROR)
 	}
 
-	if (!ext.currentTodo.$) return error(`Use command [Set Todo] first.`)
+	if (!ext.currentTodo.$) return error(NO_CURRENT_TODO_ERROR)
 
 	const doc = await vscode.workspace.openTextDocument(ext.currentTodo.$.fileUri)
 	await vscode.window.showTextDocument(doc)
@@ -43,3 +43,5 @@ export async function command_jumpToFile(ext: TodoBarExtension) {
 	}
 
 }
+
+const NO_CURRENT_TODO_ERROR = `Can't jump to line, it is not set.\nUse command [Set Todo] (default: ctrl+alt+q) to set a todo.`

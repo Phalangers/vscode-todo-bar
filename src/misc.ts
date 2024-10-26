@@ -56,10 +56,11 @@ export function removeLeadingChars(text: string, symbols: string): string {
 
 export function getMarkRange(ext: TodoBarExtension, line: vscode.TextLine) {
 	const configuration = ext.configuration.$
+	const markChars = configuration.lightMark + configuration.mark
 	if (!line.text.includes(configuration.lightMark) && !line.text.includes(configuration.mark)) return null
 
 	const beginMark = walkForward(line.text, configuration.ignoredCharacters)
-	const endMark = walkForward(line.text, configuration.lightMark + configuration.mark, beginMark)
+	const endMark = walkForward(line.text, markChars, beginMark)
 
 	return new vscode.Range(line.lineNumber, beginMark, line.lineNumber, endMark)
 }
