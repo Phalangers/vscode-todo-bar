@@ -13,7 +13,7 @@ export async function command_jumpBackAndForth(ext: TodoBarExtension) {
 	if (activeEditor) {
 		if (currentTodo.$) {
 			// Right file ?
-			if (activeEditor.document.uri === currentTodo.$.fileUri) {
+			if (activeEditor.document.uri.toString() === currentTodo.$.fileUri.toString()) {
 				// Do we know the current line ?
 				if (currentTodo.$.line) {
 					// Right line ?

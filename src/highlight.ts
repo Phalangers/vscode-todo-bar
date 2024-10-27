@@ -33,17 +33,17 @@ export class Highlights {
       this.timeout = null
     }
 
-    const currentTodo = this.ext.currentTodo.$
-    const configuration = this.ext.configuration.$
-    const enabled = this.ext.enabled
-    const editor = this.ext.activeEditor.$
-
     this.timeout = setTimeout(() => {
-      this.update(editor, currentTodo, configuration, enabled)
+      this.update()
     }, 20)
   }
 
-  private update(activeEditor: vscode.TextEditor | undefined, currentTodo: TodoLocation, configuration: Configuration, enabled: boolean) {
+  private update() {
+    const currentTodo = this.ext.currentTodo.$
+    const configuration = this.ext.configuration.$
+    const enabled = this.ext.enabled
+    const activeEditor = this.ext.activeEditor.$
+
     if (!currentTodo?.line) return
     if (!activeEditor) return
 
@@ -52,7 +52,7 @@ export class Highlights {
     if (
       enabled &&
       lines.length > 0 &&
-      currentTodo.fileUri == activeEditor.document.uri
+      currentTodo.fileUri.toString() == activeEditor.document.uri.toString()
     ) {
       this.clear()
       activeEditor.setDecorations(this.decorationType, [
