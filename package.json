@@ -87,7 +87,7 @@
 				"todo-bar.mark": {
 					"type": "string",
 					"description": "The mark to show on the selected line.",
-					"default": ">",
+					"default": "@",
 					"scope": "window"
 				},
 				"todo-bar.ignoredCharacters": {
