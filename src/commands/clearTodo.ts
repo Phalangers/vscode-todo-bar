@@ -8,7 +8,7 @@ export async function command_clearTodo(ext: TodoBarExtension) {
 
 	ext.enabled = false
 	ext.currentTodo.$ = null
-	vscode.workspace.getConfiguration('todo-bar').update('todoFilePath', null, vscode.ConfigurationTarget.WorkspaceFolder)
+	vscode.workspace.getConfiguration('todo-bar').update('todoFilePath', undefined, vscode.ConfigurationTarget.WorkspaceFolder)
 
 	ext.windowTitle.restore()
 
