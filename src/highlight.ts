@@ -52,7 +52,7 @@ export class Highlights {
     if (
       enabled &&
       lines.length > 0 &&
-      currentTodo.fileUri.toString() == activeEditor.document.uri.toString()
+      currentTodo.filePath == activeEditor.document.uri.fsPath
     ) {
       this.clear()
       activeEditor.setDecorations(this.decorationType, [

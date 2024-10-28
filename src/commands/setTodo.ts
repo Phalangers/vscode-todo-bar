@@ -11,12 +11,12 @@ export async function command_setTodo(ext: TodoBarExtension) {
 	const cursorLine = activeEditor.selection.active.line
 	const newTodo: TodoLocation = {
 		line: cursorLine,
-		fileUri: activeEditor?.document.uri,
+		filePath: activeEditor?.document.uri.fsPath,
 	}
 	ext.currentTodo.$ = newTodo
 
 	ext.parentLines.$ = getParentLines(activeEditor.document, cursorLine)
-	vscode.workspace.getConfiguration('todo-bar').update('todoFilePath', newTodo.fileUri, vscode.ConfigurationTarget.WorkspaceFolder)
+	vscode.workspace.getConfiguration('todo-bar').update('todoFilePath', newTodo.filePath, vscode.ConfigurationTarget.WorkspaceFolder)
 	ext.enabled = true
 	const text = formatText(ext.parentLines.$, ext.configuration.$.ignoredCharacters, ext.configuration.$.showParentTasks)
 	ext.statusBar.displayInStatusBar(text)

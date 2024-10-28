@@ -13,7 +13,7 @@ export async function command_jumpBackAndForth(ext: TodoBarExtension) {
 	if (activeEditor) {
 		if (currentTodo.$) {
 			// Right file ?
-			if (activeEditor.document.uri.toString() === currentTodo.$.fileUri.toString()) {
+			if (activeEditor.document.uri.fsPath === currentTodo.$.filePath) {
 				// Do we know the current line ?
 				if (currentTodo.$.line) {
 					// Right line ?
@@ -30,7 +30,7 @@ export async function command_jumpBackAndForth(ext: TodoBarExtension) {
 			const newCurrentLine = findMarkedLine(activeEditor.document, ext.configuration.$)
 			if (newCurrentLine) {
 				currentTodo.$ = {
-					fileUri: activeEditor.document.uri,
+					filePath: activeEditor.document.uri.fsPath,
 					line: newCurrentLine
 				}
 			} else {

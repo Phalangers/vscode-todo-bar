@@ -44,7 +44,7 @@ export class TodoBarExtension {
     }, null, context.subscriptions)
 
     effect(() => {
-      console.log('currentTodoUri: ' + this.currentTodo()?.fileUri)
+      console.log('currentTodoPath: ' + this.currentTodo()?.filePath)
     })
 
     this.statusBar = new StatusBar(this.configuration)
@@ -77,7 +77,7 @@ const configurationExample = {
 export type Configuration = typeof configurationExample
 
 export type TodoLocation = {
-  fileUri: vscode.Uri
+  filePath: string
   line: number | null
 } | null
 

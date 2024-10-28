@@ -9,7 +9,7 @@ export async function command_jumpToFile(ext: TodoBarExtension) {
 	const todoFilePath = ext.configuration.$.todoFilePath
 	if (todoFilePath) {
 		ext.currentTodo.$ = {
-			fileUri: vscode.Uri.file(todoFilePath),
+			filePath: todoFilePath,
 			line: -1
 		}
 	} else {
@@ -18,7 +18,7 @@ export async function command_jumpToFile(ext: TodoBarExtension) {
 
 	if (!ext.currentTodo.$) return error(NO_CURRENT_TODO_ERROR)
 
-	const doc = await vscode.workspace.openTextDocument(ext.currentTodo.$.fileUri)
+	const doc = await vscode.workspace.openTextDocument(ext.currentTodo.$.filePath)
 	await vscode.window.showTextDocument(doc)
 
 	if (doc.fileName.startsWith('Untitled-')) {
